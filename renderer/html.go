@@ -4,7 +4,7 @@ import (
 	"html"
 	"strings"
 
-	"github.com/hsm-gustavo/md-to-html-go/mdconv"
+	"github.com/hsm-gustavo/mdto/mdconv"
 )
 
 // HTMLRenderer converte nós da AST em HTML.

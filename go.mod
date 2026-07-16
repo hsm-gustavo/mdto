@@ -1,3 +1,3 @@
-module github.com/hsm-gustavo/md-to-html-go
+module github.com/hsm-gustavo/mdto
 
 go 1.26.0
