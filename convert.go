@@ -1,4 +1,4 @@
-package mdtohtml
+package mdto
 
 import "github.com/hsm-gustavo/mdto/renderer"
 
