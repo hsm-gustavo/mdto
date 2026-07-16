@@ -8,7 +8,7 @@ import (
 	"github.com/hsm-gustavo/md-to-html-go/renderer"
 )
 
-func ReadMarkdownFile(path string) (string, error) {
+func readMarkdownFile(path string) (string, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
@@ -29,7 +29,7 @@ func ReadMarkdownFile(path string) (string, error) {
 }
 
 func main() {
-	markdownContent, err := ReadMarkdownFile("./examples/EXAMPLE.md")
+	markdownContent, err := readMarkdownFile("./examples/EXAMPLE.md")
 	if err != nil {
 		log.Fatal(err)
 	}
