@@ -1,1 +1,3 @@
-examples/*.html
+!examples/*.html
+examples/*
+renderer/references

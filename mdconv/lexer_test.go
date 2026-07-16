@@ -46,7 +46,7 @@ func TestTokenizeBlocks(t *testing.T) {
 
 func TestTokenizeInline(t *testing.T) {
 	lexer := NewLexer("")
-	tokens := lexer.TokenizeInline("Olá **mundo** e [link](https://example.com)")
+	tokens := lexer.TokenizeInline("Olá **mundo** e [link](https://example.com \"titulo\") e ![imagem](./dog.jpg \"foto\")")
 
 	expected := []struct {
 		tokenType TokenType
@@ -57,7 +57,9 @@ func TestTokenizeInline(t *testing.T) {
 		{tokenType: TEXT, literal: "Olá "},
 		{tokenType: BOLD, literal: "mundo"},
 		{tokenType: TEXT, literal: " e "},
-		{tokenType: LINK, literal: "link", url: "https://example.com", title: "link"},
+		{tokenType: LINK, literal: "link", url: "https://example.com", title: "titulo"},
+		{tokenType: TEXT, literal: " e "},
+		{tokenType: IMAGE, literal: "imagem", url: "./dog.jpg", title: "foto"},
 		{tokenType: EOF},
 	}
 

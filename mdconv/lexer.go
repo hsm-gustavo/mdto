@@ -2,6 +2,7 @@ package mdconv
 
 import (
 	"strings"
+	"unicode"
 )
 
 type Lexer struct {
@@ -14,7 +15,7 @@ func NewLexer(input string) *Lexer {
 	}
 }
 
-/* 
+/*
 Lê uma linha do texto de entrada
 Enquanto não chegar no fim do arquivo, lê o caractere atual e adiciona ao builder.
 Se encontrar uma quebra de linha, lê o próximo caractere e retorna a linha lida.
@@ -45,7 +46,7 @@ func (l *Lexer) readLine() (string, Position) {
 	return builder.String(), start
 }
 
-/* 
+/*
 Lê o próximo token do texto de entrada.
 Enquanto não chegar no fim do arquivo, lê uma linha do texto de entrada.
 Se a linha lida for vazia, continua para a próxima iteração.
@@ -93,7 +94,7 @@ func (l *Lexer) NextToken() Token {
 	}
 }
 
-/* 
+/*
 Tokeniza o texto de entrada em uma sequência de tokens.
 Enquanto não chegar no fim do arquivo, lê o próximo token e adiciona à lista de tokens.
 Se o token lido for do tipo EOF, retorna a lista de tokens.
@@ -110,7 +111,7 @@ func (l *Lexer) Tokenize() []Token {
 	}
 }
 
-/* 
+/*
 Tokeniza o texto inline em uma sequência de tokens.
 */
 func (l *Lexer) TokenizeInline(input string) []Token {
@@ -348,13 +349,26 @@ func lexLinkOrImageToken(input string, index int, pos Position) (Token, int, boo
 		return Token{}, 0, false
 	}
 
-	url := input[urlStart : urlStart+urlEnd]
+	rawDestination := strings.TrimSpace(input[urlStart : urlStart+urlEnd])
+	url := rawDestination
+	title := text
+	if spaceIndex := strings.IndexFunc(rawDestination, unicode.IsSpace); spaceIndex >= 0 {
+		url = strings.TrimSpace(rawDestination[:spaceIndex])
+		title = strings.TrimSpace(rawDestination[spaceIndex:])
+		title = strings.Trim(title, " \t\r\n\"")
+	}
+	if strings.HasPrefix(url, "<") && strings.HasSuffix(url, ">") {
+		url = strings.TrimSuffix(strings.TrimPrefix(url, "<"), ">")
+	}
+	if title == "" {
+		title = text
+	}
 	consumed := urlStart + urlEnd + 1 - index
 	return Token{
 		Type:     tokenType,
 		Literal:  text,
 		Position: shiftPosition(pos, index),
-		Title:    text,
+		Title:    title,
 		URL:      url,
 	}, consumed, true
 }

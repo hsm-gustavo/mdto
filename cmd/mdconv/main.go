@@ -36,8 +36,12 @@ func main() {
 
 	r := renderer.NewHTMLRenderer()
 
-	html := r.RenderMarkdown(markdownContent)
+  pdf := renderer.NewPDFRenderer()
 
+	html := r.RenderMarkdown(markdownContent)
+  pdfContent := pdf.RenderMarkdown(markdownContent)
 	os.WriteFile("./examples/EXAMPLE.html", []byte(html), 0644)
+	os.WriteFile("./examples/EXAMPLE.pdf", []byte(pdfContent), 0644)
 	log.Println("HTML gerado com sucesso em ./examples/EXAMPLE.html")
+	log.Println("PDF gerado com sucesso em ./examples/EXAMPLE.pdf")
 }

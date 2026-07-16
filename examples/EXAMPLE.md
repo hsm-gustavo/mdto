@@ -10,10 +10,10 @@
 
 ## Emphasis
 
-_This text will be italic_  
+_This text will be italic_
 _This will also be italic_
 
-**This text will be bold**  
+**This text will be bold**
 **This will also be bold**
 
 _You **can** combine them_
@@ -39,7 +39,9 @@ _You **can** combine them_
 
 ## Images
 
-![This is an alt text.](https://plus.unsplash.com/premium_photo-1666777247416-ee7a95235559?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8ZG9nfGVufDB8fDB8fHww "This is a sample image.")
+![This is an alt text.](https://upload.wikimedia.org/wikipedia/commons/4/43/Cute_dog.jpg "This is a sample image.")
+
+![This is another alt text.](./dog.jpg "This is a sample image.")
 
 ## Links
 
