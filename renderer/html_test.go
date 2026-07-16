@@ -21,3 +21,13 @@ func TestRenderMarkdownRendersSingleListBlock(t *testing.T) {
 		t.Fatalf("html de lista inesperado\nquerido: %s\nrecebido: %s", expected, html)
 	}
 }
+
+func TestRenderMarkdownHandlesNestedEmphasis(t *testing.T) {
+	r := NewHTMLRenderer()
+	html := r.RenderMarkdown("_You **can** combine them_")
+
+	expected := "<p><em>You <strong>can</strong> combine them</em></p>"
+	if html != expected {
+		t.Fatalf("html de ênfase aninhada inesperado\nquerido: %s\nrecebido: %s", expected, html)
+	}
+}

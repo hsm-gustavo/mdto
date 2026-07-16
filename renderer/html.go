@@ -55,9 +55,9 @@ func (r *HTMLRenderer) renderNode(node *mdconv.Node) string {
 	case mdconv.TEXT:
 		return html.EscapeString(node.Value)
 	case mdconv.ITALIC:
-		return "<em>" + html.EscapeString(node.Value) + "</em>"
+		return "<em>" + r.renderChildren(node.Children, node.Value) + "</em>"
 	case mdconv.BOLD:
-		return "<strong>" + html.EscapeString(node.Value) + "</strong>"
+		return "<strong>" + r.renderChildren(node.Children, node.Value) + "</strong>"
 	case mdconv.STRIKETHROUGH:
 		return "<del>" + r.renderChildren(node.Children, node.Value) + "</del>"
 	case mdconv.CODE_INLINE:
