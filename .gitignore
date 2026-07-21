@@ -1,3 +1,4 @@
 !examples/*.html
 examples/*
 renderer/references
+.prettierignore
