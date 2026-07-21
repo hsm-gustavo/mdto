@@ -1,3 +1,3 @@
 module github.com/hsm-gustavo/mdto
 
-go 1.26.0
+go 1.20.0
