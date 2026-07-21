@@ -1,0 +1,25 @@
+name: Go
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v7
+
+      - name: Configurar o ambiente
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.20"
+
+      - name: Compilar
+        run: go build -v ./...
+
+      - name: Executar Testes
+        run: go test -v ./...
