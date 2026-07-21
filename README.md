@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/hsm-gustavo/mdto)](https://pkg.go.dev/github.com/hsm-gustavo/mdto)
 
-[![Go](https://github.com/hsm-gustavo/mdto/actions/workflows/go.yml/badge.svg)](https://github.com/hsm-gustavo/mdto/actions/workflows/go.yml)
+[![Go](https://github.com/hsm-gustavo/mdto/actions/workflows/go.yaml/badge.svg)](https://github.com/hsm-gustavo/mdto/actions/workflows/go.yaml)
 
 A simple markdown converter that parses markdown into an AST and renders it into HTML. It supports basic markdown syntax, including headings, lists, links, images, code blocks, and more.
 
