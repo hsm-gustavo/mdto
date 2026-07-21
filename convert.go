@@ -10,9 +10,3 @@ func HTML(markdownContent string) string {
 	html := r.RenderMarkdown(markdownContent)
 	return html
 }
-
-func PDF(markdownContent string) string {
-  r := renderer.NewPDFRenderer()
-  pdf := r.RenderMarkdown(markdownContent)
-  return pdf
-}

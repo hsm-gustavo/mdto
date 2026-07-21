@@ -1,6 +1,6 @@
 # mdto
 
-A simple markdown converter that parses markdown into an AST and renders it into multiple formats [(work in progress)](#todo). It supports basic markdown syntax, including headings, lists, links, images, code blocks, and more.
+A simple markdown converter that parses markdown into an AST and renders it into HTML. It supports basic markdown syntax, including headings, lists, links, images, code blocks, and more.
 
 ## Installation
 
@@ -57,4 +57,3 @@ func main() {
 ## TODO
 
 - Add support for tables and other advanced markdown features.
-- Add support for more output formats (e.g., PDF, DOCX, etc.).
