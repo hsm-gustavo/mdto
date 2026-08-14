@@ -29,6 +29,7 @@ type jsonNode struct {
 	Language string      `json:"language,omitempty"`
 	Value    string      `json:"value,omitempty"`
 	URL      string      `json:"url,omitempty"`
+	Checked  *bool       `json:"checked,omitempty"`
 	Children []*jsonNode `json:"children,omitempty"`
 }
 
@@ -47,14 +48,15 @@ func jsonNodeFromNode(node *mdconv.Node) *jsonNode {
 		Type:     jsonNodeType(node.Type),
 		Level:    node.Level,
 		Language: node.Language,
+		Checked:  node.Checked,
 		Children: jsonNodes(node.Children),
 	}
 
 	switch node.Type {
-	case mdconv.NodeText, mdconv.NodeInlineCode, mdconv.NodeCodeBlock, mdconv.NodeLink, mdconv.NodeImage:
+	case mdconv.NodeText, mdconv.NodeInlineCode, mdconv.NodeCodeBlock, mdconv.NodeLink, mdconv.NodeImage, mdconv.NodeAutolink, mdconv.NodeTableCell:
 		result.Value = node.Value
 	}
-	if node.Type == mdconv.NodeLink || node.Type == mdconv.NodeImage {
+	if node.Type == mdconv.NodeLink || node.Type == mdconv.NodeImage || node.Type == mdconv.NodeAutolink {
 		result.URL = node.URL
 	}
 
@@ -93,6 +95,16 @@ func jsonNodeType(nodeType mdconv.NodeType) string {
 		return "link"
 	case mdconv.NodeImage:
 		return "image"
+	case mdconv.NodeAutolink:
+		return "autolink"
+	case mdconv.NodeTable:
+		return "table"
+	case mdconv.NodeTableHeader:
+		return "table_header"
+	case mdconv.NodeTableRow:
+		return "table_row"
+	case mdconv.NodeTableCell:
+		return "table_cell"
 	default:
 		return "unknown"
 	}

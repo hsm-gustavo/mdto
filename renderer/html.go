@@ -52,6 +52,8 @@ func (r *HTMLRenderer) renderNode(node *mdconv.Node) string {
 		return r.renderList("ol", node)
 	case mdconv.NodeHorizontalRule:
 		return "<hr />"
+	case mdconv.NodeTable:
+		return r.renderTable(node)
 	case mdconv.NodeText:
 		return html.EscapeString(node.Value)
 	case mdconv.NodeItalic:
@@ -66,6 +68,8 @@ func (r *HTMLRenderer) renderNode(node *mdconv.Node) string {
 		return r.renderLink(node)
 	case mdconv.NodeImage:
 		return r.renderImage(node)
+	case mdconv.NodeAutolink:
+		return r.renderAutolink(node)
 	case mdconv.NodeListItem:
 		return r.renderChildren(node.Children, node.Value)
 	default:
@@ -115,6 +119,13 @@ func (r *HTMLRenderer) renderList(tag string, node *mdconv.Node) string {
 
 	for _, item := range node.Children {
 		builder.WriteString("<li>")
+		if item.Checked != nil {
+			builder.WriteString("<input type=\"checkbox\"")
+			if *item.Checked {
+				builder.WriteString(" checked")
+			}
+			builder.WriteString(" disabled />")
+		}
 		builder.WriteString(r.renderChildren(item.Children, item.Value))
 		builder.WriteString("</li>")
 	}
@@ -133,6 +144,51 @@ func (r *HTMLRenderer) renderLink(node *mdconv.Node) string {
 // renderImage converte um nó de imagem em uma tag img autocontida.
 func (r *HTMLRenderer) renderImage(node *mdconv.Node) string {
 	return "<img src=\"" + html.EscapeString(node.URL) + "\" alt=\"" + html.EscapeString(node.Title) + "\" />"
+}
+
+func (r *HTMLRenderer) renderAutolink(node *mdconv.Node) string {
+	return "<a href=\"" + html.EscapeString(node.URL) + "\">" + html.EscapeString(node.Value) + "</a>"
+}
+
+func (r *HTMLRenderer) renderTable(node *mdconv.Node) string {
+	var builder strings.Builder
+	bodyStarted := false
+	builder.WriteString("<table>")
+	for _, child := range node.Children {
+		switch child.Type {
+		case mdconv.NodeTableHeader:
+			builder.WriteString("<thead>")
+			builder.WriteString(r.renderTableRow(child, "th"))
+			builder.WriteString("</thead>")
+		case mdconv.NodeTableRow:
+			if !bodyStarted {
+				builder.WriteString("<tbody>")
+				bodyStarted = true
+			}
+			builder.WriteString(r.renderTableRow(child, "td"))
+		}
+	}
+	if bodyStarted {
+		builder.WriteString("</tbody>")
+	}
+	builder.WriteString("</table>")
+	return builder.String()
+}
+
+func (r *HTMLRenderer) renderTableRow(row *mdconv.Node, tag string) string {
+	var builder strings.Builder
+	builder.WriteString("<tr>")
+	for _, cell := range row.Children {
+		builder.WriteString("<")
+		builder.WriteString(tag)
+		builder.WriteString(">")
+		builder.WriteString(r.renderChildren(cell.Children, cell.Value))
+		builder.WriteString("</")
+		builder.WriteString(tag)
+		builder.WriteString(">")
+	}
+	builder.WriteString("</tr>")
+	return builder.String()
 }
 
 // renderChildren junta os filhos inline e, se não houver filhos, renderiza o valor bruto do nó.

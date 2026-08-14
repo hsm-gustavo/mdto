@@ -41,3 +41,23 @@ func TestRenderMarkdownRendersMultilineParagraph(t *testing.T) {
 		t.Fatalf("unexpected multiline paragraph HTML\nexpected: %s\ngot: %s", expected, html)
 	}
 }
+
+func TestRenderMarkdownRendersTable(t *testing.T) {
+	r := NewHTMLRenderer()
+	html := r.RenderMarkdown("| Name | Age |\n|------|-----|\n| **Ana** | 20 |\n| Bob | 30 |")
+
+	expected := "<table><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td><strong>Ana</strong></td><td>20</td></tr><tr><td>Bob</td><td>30</td></tr></tbody></table>"
+	if html != expected {
+		t.Fatalf("unexpected table HTML\nexpected: %s\ngot: %s", expected, html)
+	}
+}
+
+func TestRenderMarkdownRendersNestedBlockquoteAndTasks(t *testing.T) {
+	r := NewHTMLRenderer()
+	html := r.RenderMarkdown("> ## Header\n>\n> - [x] done\n> - [ ] pending\n\n<https://example.com>")
+
+	expected := "<blockquote><h2>Header</h2><ul><li><input type=\"checkbox\" checked disabled />done</li><li><input type=\"checkbox\" disabled />pending</li></ul></blockquote><p><a href=\"https://example.com\">https://example.com</a></p>"
+	if html != expected {
+		t.Fatalf("unexpected HTML\nexpected: %s\ngot: %s", expected, html)
+	}
+}

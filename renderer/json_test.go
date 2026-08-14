@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hsm-gustavo/mdto/mdconv"
@@ -39,5 +40,18 @@ func TestJSONRendererRendersReadableAST(t *testing.T) {
 ]`
 	if output != expected {
 		t.Fatalf("unexpected JSON\nexpected: %s\ngot: %s", expected, output)
+	}
+}
+
+func TestJSONRendererIncludesTableAndTaskListFields(t *testing.T) {
+	lexer := mdconv.NewLexer("| Name | Age |\n|------|-----|\n| Ana | 20 |\n\n- [x] done")
+	nodes := mdconv.NewParser(lexer.Tokenize()).Parse()
+
+	output, err := NewJSONRenderer().Render(nodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output, `"type": "table"`) || !strings.Contains(output, `"type": "table_cell"`) || !strings.Contains(output, `"checked": true`) {
+		t.Fatalf("expected table and task fields in JSON, got: %s", output)
 	}
 }
