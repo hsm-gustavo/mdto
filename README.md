@@ -58,6 +58,17 @@ func main() {
 }
 ```
 
+## Parsing Markdown
+
+Use `mdto.Parse` when you need access to the parsed AST before rendering it:
+
+```go
+nodes := mdto.Parse("# Hello, World!")
+```
+
+`Parse` returns the document's top-level `[]*mdto.Node`. A separate `Document`
+wrapper is intentionally not used yet because the AST has no document-level metadata.
+
 ## TODO
 
 - Add support for tables and other advanced markdown features.
