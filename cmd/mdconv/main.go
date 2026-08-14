@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hsm-gustavo/mdto"
+	"github.com/hsm-gustavo/mdto/renderer"
 )
 
 type options struct {
@@ -115,19 +116,23 @@ func parseOptions(args []string) (options, error) {
 }
 
 func render(input, format string) (string, error) {
-	if err := validateFormat(format); err != nil {
-		return "", err
+	switch format {
+	case "html":
+		return mdto.HTML(input), nil
+	case "ast":
+		return renderer.NewJSONRenderer().Render(mdto.Parse(input))
+	default:
+		return "", fmt.Errorf("unsupported output format %q", format)
 	}
-	return mdto.HTML(input), nil
 }
 
 func validateFormat(format string) error {
-	if format != "html" {
+	if format != "html" && format != "ast" {
 		return fmt.Errorf("unsupported output format %q", format)
 	}
 	return nil
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "usage: mdconv [--to html] [-o output.html] [input.md]")
+	fmt.Fprintln(writer, "usage: mdconv [--to html|ast] [-o output.html] [input.md]")
 }

@@ -83,12 +83,22 @@ When no input file is provided, `mdconv` reads from standard input:
 cat README.md | mdconv
 ```
 
-Use `-o` to write directly to a file. HTML is the only supported output format and
-is selected by default:
+Use `-o` to write directly to a file. HTML is selected by default; use `ast` to
+print the parsed AST as formatted JSON:
 
 ```sh
 mdconv README.md -o README.html
 mdconv --to html README.md
+mdconv --to ast README.md
+```
+
+## Plain text
+
+Use `mdto.Text` to render Markdown as readable plain text. It preserves image alt
+text and code block contents while removing Markdown formatting:
+
+```go
+text := mdto.Text("# Hello\n\nThis is **bold**.")
 ```
 
 ## TODO

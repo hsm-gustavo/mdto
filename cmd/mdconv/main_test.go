@@ -101,3 +101,29 @@ func TestRunRejectsUnsupportedOutputFormat(t *testing.T) {
 		t.Fatalf("unexpected stderr: %q", stderr.String())
 	}
 }
+
+func TestRunRendersASTAsJSON(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	exitCode := run([]string{"--to", "ast"}, strings.NewReader("# Title"), &stdout, &stderr)
+
+	if exitCode != 0 {
+		t.Fatalf("expected exit code 0, got %d: %s", exitCode, stderr.String())
+	}
+	expected := `[
+  {
+    "type": "heading",
+    "level": 1,
+    "children": [
+      {
+        "type": "text",
+        "value": "Title"
+      }
+    ]
+  }
+]`
+	if stdout.String() != expected {
+		t.Fatalf("unexpected JSON\nexpected: %s\ngot: %s", expected, stdout.String())
+	}
+}
