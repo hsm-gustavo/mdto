@@ -41,3 +41,9 @@ func HTML(markdownContent string) string {
 	r := renderer.NewHTMLRenderer()
 	return r.Render(Parse(markdownContent))
 }
+
+// Text converte conteúdo Markdown em texto puro.
+func Text(markdownContent string) string {
+	r := renderer.NewTextRenderer()
+	return r.Render(Parse(markdownContent))
+}
