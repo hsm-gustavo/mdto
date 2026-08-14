@@ -31,3 +31,13 @@ func TestRenderMarkdownHandlesNestedEmphasis(t *testing.T) {
 		t.Fatalf("html de ênfase aninhada inesperado\nquerido: %s\nrecebido: %s", expected, html)
 	}
 }
+
+func TestRenderMarkdownRendersMultilineParagraph(t *testing.T) {
+	r := NewHTMLRenderer()
+	html := r.RenderMarkdown("First line\nsecond line")
+
+	expected := "<p>First line\nsecond line</p>"
+	if html != expected {
+		t.Fatalf("unexpected multiline paragraph HTML\nexpected: %s\ngot: %s", expected, html)
+	}
+}

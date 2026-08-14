@@ -6,7 +6,13 @@ import (
 )
 
 type Lexer struct {
-	reader *Reader
+	reader  *Reader
+	pending *line
+}
+
+type line struct {
+	content  string
+	position Position
 }
 
 func NewLexer(input string) *Lexer {
@@ -56,42 +62,100 @@ Se não encontrar nenhum token válido, retorna um token do tipo PARAGRAPH com o
 Se chegar no fim do arquivo, retorna um token do tipo EOF.
 */
 func (l *Lexer) NextToken() Token {
-	for !l.reader.EOF() {
-		line, pos := l.readLine()
-		if strings.TrimSpace(line) == "" {
+	for {
+		current, ok := l.nextLine()
+		if !ok {
+			return Token{
+				Type:     EOF,
+				Position: l.reader.Position(),
+			}
+		}
+
+		if strings.TrimSpace(current.content) == "" {
 			continue
 		}
 
-		if token, ok := l.lexCodeBlock(line, pos); ok {
+		if token, ok := l.lexCodeBlock(current.content, current.position); ok {
 			return token
 		}
-		if token, ok := l.lexHeading(line, pos); ok {
+		if token, ok := l.lexHeading(current.content, current.position); ok {
 			return token
 		}
-		if token, ok := l.lexHorizontalRule(line, pos); ok {
+		if token, ok := l.lexHorizontalRule(current.content, current.position); ok {
 			return token
 		}
-		if token, ok := l.lexBlockQuote(line, pos); ok {
+		if token, ok := l.lexBlockQuote(current.content, current.position); ok {
 			return token
 		}
-		if token, ok := l.lexUnorderedList(line, pos); ok {
+		if token, ok := l.lexUnorderedList(current.content, current.position); ok {
 			return token
 		}
-		if token, ok := l.lexOrderedList(line, pos); ok {
+		if token, ok := l.lexOrderedList(current.content, current.position); ok {
 			return token
 		}
 
-		return Token{
-			Type:     PARAGRAPH,
-			Literal:  strings.TrimSpace(line),
-			Position: pos,
+		return l.lexParagraph(current)
+	}
+}
+
+func (l *Lexer) nextLine() (line, bool) {
+	if l.pending != nil {
+		current := *l.pending
+		l.pending = nil
+		return current, true
+	}
+	if l.reader.EOF() {
+		return line{}, false
+	}
+
+	content, position := l.readLine()
+	return line{content: content, position: position}, true
+}
+
+func (l *Lexer) lexParagraph(first line) Token {
+	lines := []string{strings.TrimSpace(first.content)}
+
+	for {
+		next, ok := l.nextLine()
+		if !ok || strings.TrimSpace(next.content) == "" {
+			break
 		}
+		if l.isBlockStart(next) {
+			l.pending = &next
+			break
+		}
+
+		lines = append(lines, strings.TrimSpace(next.content))
 	}
 
 	return Token{
-		Type:     EOF,
-		Position: l.reader.Position(),
+		Type:     PARAGRAPH,
+		Literal:  strings.Join(lines, "\n"),
+		Position: first.position,
 	}
+}
+
+func (l *Lexer) isBlockStart(current line) bool {
+	trimmed := strings.TrimSpace(current.content)
+	if strings.HasPrefix(trimmed, "```") {
+		return true
+	}
+	if _, ok := l.lexHeading(current.content, current.position); ok {
+		return true
+	}
+	if _, ok := l.lexHorizontalRule(current.content, current.position); ok {
+		return true
+	}
+	if _, ok := l.lexBlockQuote(current.content, current.position); ok {
+		return true
+	}
+	if _, ok := l.lexUnorderedList(current.content, current.position); ok {
+		return true
+	}
+	if _, ok := l.lexOrderedList(current.content, current.position); ok {
+		return true
+	}
+	return false
 }
 
 /*
