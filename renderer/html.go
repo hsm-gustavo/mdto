@@ -38,35 +38,35 @@ func (r *HTMLRenderer) renderNode(node *mdconv.Node) string {
 	}
 
 	switch node.Type {
-	case mdconv.HEADING:
+	case mdconv.NodeHeading:
 		return r.renderHeading(node)
-	case mdconv.PARAGRAPH:
+	case mdconv.NodeParagraph:
 		return r.renderParagraph(node)
-	case mdconv.CODE_BLOCK:
+	case mdconv.NodeCodeBlock:
 		return r.renderCodeBlock(node)
-	case mdconv.BLOCKQUOTE:
+	case mdconv.NodeBlockquote:
 		return r.renderBlockquote(node)
-	case mdconv.ULIST:
+	case mdconv.NodeUnorderedList:
 		return r.renderList("ul", node)
-	case mdconv.OLIST:
+	case mdconv.NodeOrderedList:
 		return r.renderList("ol", node)
-	case mdconv.HR:
+	case mdconv.NodeHorizontalRule:
 		return "<hr />"
-	case mdconv.TEXT:
+	case mdconv.NodeText:
 		return html.EscapeString(node.Value)
-	case mdconv.ITALIC:
+	case mdconv.NodeItalic:
 		return "<em>" + r.renderChildren(node.Children, node.Value) + "</em>"
-	case mdconv.BOLD:
+	case mdconv.NodeBold:
 		return "<strong>" + r.renderChildren(node.Children, node.Value) + "</strong>"
-	case mdconv.STRIKETHROUGH:
+	case mdconv.NodeStrikethrough:
 		return "<del>" + r.renderChildren(node.Children, node.Value) + "</del>"
-	case mdconv.CODE_INLINE:
+	case mdconv.NodeInlineCode:
 		return "<code>" + html.EscapeString(node.Value) + "</code>"
-	case mdconv.LINK:
+	case mdconv.NodeLink:
 		return r.renderLink(node)
-	case mdconv.IMAGE:
+	case mdconv.NodeImage:
 		return r.renderImage(node)
-	case mdconv.LIST_ITEM:
+	case mdconv.NodeListItem:
 		return r.renderChildren(node.Children, node.Value)
 	default:
 		return html.EscapeString(node.Value)

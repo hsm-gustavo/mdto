@@ -44,37 +44,37 @@ func (p *Parser) parseToken(token Token) *Node {
 	switch token.Type {
 	case HEADING:
 		return &Node{
-			Type:     HEADING,
+			Type:     NodeHeading,
 			Level:    token.Level,
 			Value:    token.Literal,
 			Children: p.parseInlineChildren(token.Literal),
 		}
 	case PARAGRAPH:
 		return &Node{
-			Type:     PARAGRAPH,
+			Type:     NodeParagraph,
 			Value:    token.Literal,
 			Children: p.parseInlineChildren(token.Literal),
 		}
 	case CODE_BLOCK:
 		return &Node{
-			Type:     CODE_BLOCK,
+			Type:     NodeCodeBlock,
 			Language: token.Language,
 			Value:    token.Literal,
 		}
 	case BLOCKQUOTE:
 		return &Node{
-			Type:     BLOCKQUOTE,
+			Type:     NodeBlockquote,
 			Value:    token.Literal,
 			Children: p.parseInlineChildren(token.Literal),
 		}
 	case ULIST, OLIST:
 		return &Node{
-			Type:     token.Type,
+			Type:     nodeTypeFromTokenType(token.Type),
 			Value:    token.Literal,
 			Children: p.parseInlineChildren(token.Literal),
 		}
 	case HR:
-		return &Node{Type: HR, Value: token.Literal}
+		return &Node{Type: NodeHorizontalRule, Value: token.Literal}
 	default:
 		return nil
 	}
@@ -102,19 +102,19 @@ func (p *Parser) parseInlineChildren(input string) []*Node {
 func (p *Parser) inlineTokenToNode(token Token) *Node {
 	switch token.Type {
 	case TEXT:
-		return &Node{Type: TEXT, Value: token.Literal}
+		return &Node{Type: NodeText, Value: token.Literal}
 	case ITALIC:
-		return &Node{Type: ITALIC, Value: token.Literal, Children: p.parseInlineChildren(token.Literal)}
+		return &Node{Type: NodeItalic, Value: token.Literal, Children: p.parseInlineChildren(token.Literal)}
 	case BOLD:
-		return &Node{Type: BOLD, Value: token.Literal, Children: p.parseInlineChildren(token.Literal)}
+		return &Node{Type: NodeBold, Value: token.Literal, Children: p.parseInlineChildren(token.Literal)}
 	case STRIKETHROUGH:
-		return &Node{Type: STRIKETHROUGH, Value: token.Literal, Children: p.parseInlineChildren(token.Literal)}
+		return &Node{Type: NodeStrikethrough, Value: token.Literal, Children: p.parseInlineChildren(token.Literal)}
 	case CODE_INLINE:
-		return &Node{Type: CODE_INLINE, Value: token.Literal}
+		return &Node{Type: NodeInlineCode, Value: token.Literal}
 	case LINK:
-		return &Node{Type: LINK, Value: token.Literal, URL: token.URL, Title: token.Title}
+		return &Node{Type: NodeLink, Value: token.Literal, URL: token.URL, Title: token.Title}
 	case IMAGE:
-		return &Node{Type: IMAGE, Value: token.Literal, URL: token.URL, Title: token.Title}
+		return &Node{Type: NodeImage, Value: token.Literal, URL: token.URL, Title: token.Title}
 	default:
 		return nil
 	}
@@ -142,7 +142,7 @@ func (p *Parser) parseList() *Node {
 		}
 
 		item := &Node{
-			Type:     LIST_ITEM,
+			Type:     NodeListItem,
 			Value:    token.Literal,
 			Children: p.parseInlineChildren(token.Literal),
 		}
@@ -163,7 +163,7 @@ func (p *Parser) parseList() *Node {
 		items = append(items, item)
 	}
 
-	return &Node{Type: listType, Children: items}
+	return &Node{Type: nodeTypeFromTokenType(listType), Children: items}
 }
 
 // parseNestedList cria uma lista filha quando a indentação aumenta em relação ao item atual.
@@ -190,7 +190,7 @@ func (p *Parser) parseNestedList(indent int) *Node {
 		}
 
 		item := &Node{
-			Type:     LIST_ITEM,
+			Type:     NodeListItem,
 			Value:    token.Literal,
 			Children: p.parseInlineChildren(token.Literal),
 		}
@@ -211,7 +211,7 @@ func (p *Parser) parseNestedList(indent int) *Node {
 		items = append(items, item)
 	}
 
-	return &Node{Type: listType, Children: items}
+	return &Node{Type: nodeTypeFromTokenType(listType), Children: items}
 }
 
 // current devolve o token na posição atual sem avançar o cursor do parser.
@@ -231,4 +231,15 @@ func (p *Parser) atEnd() bool {
 // isListToken verifica se o token atual representa uma linha de lista.
 func (p *Parser) isListToken(token Token) bool {
 	return token.Type == ULIST || token.Type == OLIST
+}
+
+func nodeTypeFromTokenType(tokenType TokenType) NodeType {
+	switch tokenType {
+	case ULIST:
+		return NodeUnorderedList
+	case OLIST:
+		return NodeOrderedList
+	default:
+		return ""
+	}
 }

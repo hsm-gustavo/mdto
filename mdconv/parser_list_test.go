@@ -12,30 +12,30 @@ func TestParserGroupsListsAndKeepsNestedEmphasis(t *testing.T) {
 	}
 
 	paragraph := nodes[0]
-	if paragraph.Type != PARAGRAPH {
+	if paragraph.Type != NodeParagraph {
 		t.Fatalf("esperava parágrafo, recebeu %s", paragraph.Type)
 	}
 	if len(paragraph.Children) != 1 {
 		t.Fatalf("esperava 1 filho no parágrafo, recebeu %d: %#v", len(paragraph.Children), paragraph.Children)
 	}
-	if paragraph.Children[0].Type != ITALIC {
+	if paragraph.Children[0].Type != NodeItalic {
 		t.Fatalf("esperava ITALIC externo, recebeu %s", paragraph.Children[0].Type)
 	}
 	if len(paragraph.Children[0].Children) != 3 {
 		t.Fatalf("esperava 3 filhos dentro do ITALIC, recebeu %d: %#v", len(paragraph.Children[0].Children), paragraph.Children[0].Children)
 	}
-	if paragraph.Children[0].Children[1].Type != BOLD {
+	if paragraph.Children[0].Children[1].Type != NodeBold {
 		t.Fatalf("esperava BOLD aninhado dentro do ITALIC, recebeu %s", paragraph.Children[0].Children[1].Type)
 	}
 
 	unordered := nodes[1]
-	if unordered.Type != ULIST {
+	if unordered.Type != NodeUnorderedList {
 		t.Fatalf("esperava ULIST, recebeu %s", unordered.Type)
 	}
 	if len(unordered.Children) != 4 {
 		t.Fatalf("esperava 4 itens no ULIST, recebeu %d: %#v", len(unordered.Children), unordered.Children)
 	}
-	if unordered.Children[3].Type != LIST_ITEM {
+	if unordered.Children[3].Type != NodeListItem {
 		t.Fatalf("esperava LIST_ITEM, recebeu %s", unordered.Children[3].Type)
 	}
 	if len(unordered.Children[3].Children) != 2 {
@@ -43,7 +43,7 @@ func TestParserGroupsListsAndKeepsNestedEmphasis(t *testing.T) {
 	}
 
 	ordered := nodes[2]
-	if ordered.Type != OLIST {
+	if ordered.Type != NodeOrderedList {
 		t.Fatalf("esperava OLIST, recebeu %s", ordered.Type)
 	}
 	if len(ordered.Children) != 3 {

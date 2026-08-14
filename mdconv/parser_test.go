@@ -12,7 +12,7 @@ func TestParserBuildsNodes(t *testing.T) {
 	}
 
 	heading := nodes[0]
-	if heading.Type != HEADING {
+	if heading.Type != NodeHeading {
 		t.Fatalf("esperava heading, recebeu %s", heading.Type)
 	}
 	if heading.Level != 1 {
@@ -21,26 +21,26 @@ func TestParserBuildsNodes(t *testing.T) {
 	if heading.Value != "Titulo" {
 		t.Fatalf("esperava valor %q, recebeu %q", "Titulo", heading.Value)
 	}
-	if len(heading.Children) != 1 || heading.Children[0].Type != TEXT {
+	if len(heading.Children) != 1 || heading.Children[0].Type != NodeText {
 		t.Fatalf("esperava um filho TEXT no heading, recebeu %#v", heading.Children)
 	}
 
 	paragraph := nodes[1]
-	if paragraph.Type != PARAGRAPH {
+	if paragraph.Type != NodeParagraph {
 		t.Fatalf("esperava paragraph, recebeu %s", paragraph.Type)
 	}
 	if len(paragraph.Children) != 4 {
 		t.Fatalf("esperava 4 filhos no parágrafo, recebeu %d: %#v", len(paragraph.Children), paragraph.Children)
 	}
-	if paragraph.Children[1].Type != BOLD {
+	if paragraph.Children[1].Type != NodeBold {
 		t.Fatalf("esperava BOLD no segundo filho, recebeu %s", paragraph.Children[1].Type)
 	}
-	if paragraph.Children[3].Type != LINK || paragraph.Children[3].URL != "https://example.com" {
+	if paragraph.Children[3].Type != NodeLink || paragraph.Children[3].URL != "https://example.com" {
 		t.Fatalf("esperava LINK com URL correta, recebeu %#v", paragraph.Children[3])
 	}
 
 	codeBlock := nodes[2]
-	if codeBlock.Type != CODE_BLOCK {
+	if codeBlock.Type != NodeCodeBlock {
 		t.Fatalf("esperava code block, recebeu %s", codeBlock.Type)
 	}
 	if codeBlock.Language != "go" {
