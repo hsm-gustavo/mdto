@@ -4,7 +4,7 @@
 
 [![Go](https://github.com/hsm-gustavo/mdto/actions/workflows/go.yaml/badge.svg)](https://github.com/hsm-gustavo/mdto/actions/workflows/go.yaml)
 
-A simple markdown converter that parses markdown into an AST and renders it into HTML. It supports basic markdown syntax, including headings, lists, links, images, code blocks, and more.
+A simple markdown converter that parses markdown into an AST and renders it into HTML, plain text, or formatted JSON. It supports headings, lists, task lists, tables, links, images, code blocks, blockquotes, and more.
 
 ## Installation
 
@@ -103,4 +103,4 @@ text := mdto.Text("# Hello\n\nThis is **bold**.")
 
 ## TODO
 
-- Add support for tables and other advanced markdown features.
+- Add other advanced markdown features.
