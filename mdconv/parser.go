@@ -62,10 +62,12 @@ func (p *Parser) parseToken(token Token) *Node {
 			Value:    token.Literal,
 		}
 	case BLOCKQUOTE:
+		quotedLexer := NewLexer(token.Literal)
+		quotedParser := NewParser(quotedLexer.Tokenize())
 		return &Node{
 			Type:     NodeBlockquote,
 			Value:    token.Literal,
-			Children: p.parseInlineChildren(token.Literal),
+			Children: quotedParser.Parse(),
 		}
 	case ULIST, OLIST:
 		return &Node{
@@ -75,6 +77,8 @@ func (p *Parser) parseToken(token Token) *Node {
 		}
 	case HR:
 		return &Node{Type: NodeHorizontalRule, Value: token.Literal}
+	case TABLE:
+		return p.parseTable(token)
 	default:
 		return nil
 	}
@@ -115,6 +119,8 @@ func (p *Parser) inlineTokenToNode(token Token) *Node {
 		return &Node{Type: NodeLink, Value: token.Literal, URL: token.URL, Title: token.Title}
 	case IMAGE:
 		return &Node{Type: NodeImage, Value: token.Literal, URL: token.URL, Title: token.Title}
+	case AUTOLINK:
+		return &Node{Type: NodeAutolink, Value: token.Literal, URL: token.URL}
 	default:
 		return nil
 	}
@@ -141,11 +147,7 @@ func (p *Parser) parseList() *Node {
 			break
 		}
 
-		item := &Node{
-			Type:     NodeListItem,
-			Value:    token.Literal,
-			Children: p.parseInlineChildren(token.Literal),
-		}
+		item := p.parseListItem(token.Literal)
 		p.pos++
 
 		for !p.atEnd() {
@@ -189,11 +191,7 @@ func (p *Parser) parseNestedList(indent int) *Node {
 			break
 		}
 
-		item := &Node{
-			Type:     NodeListItem,
-			Value:    token.Literal,
-			Children: p.parseInlineChildren(token.Literal),
-		}
+		item := p.parseListItem(token.Literal)
 		p.pos++
 
 		for !p.atEnd() {
@@ -231,6 +229,60 @@ func (p *Parser) atEnd() bool {
 // isListToken verifica se o token atual representa uma linha de lista.
 func (p *Parser) isListToken(token Token) bool {
 	return token.Type == ULIST || token.Type == OLIST
+}
+
+func (p *Parser) parseTable(token Token) *Node {
+	headerCells := make([]*Node, 0, len(token.TableHeader))
+	for _, value := range token.TableHeader {
+		headerCells = append(headerCells, p.parseTableCell(value))
+	}
+
+	children := []*Node{{Type: NodeTableHeader, Children: headerCells}}
+	for _, row := range token.TableRows {
+		cells := make([]*Node, 0, len(row))
+		for _, value := range row {
+			cells = append(cells, p.parseTableCell(value))
+		}
+		children = append(children, &Node{Type: NodeTableRow, Children: cells})
+	}
+
+	return &Node{Type: NodeTable, Children: children}
+}
+
+func (p *Parser) parseTableCell(value string) *Node {
+	return &Node{Type: NodeTableCell, Value: value, Children: p.parseInlineChildren(value)}
+}
+
+func (p *Parser) parseListItem(value string) *Node {
+	content, checked := taskListState(value)
+	return &Node{
+		Type:     NodeListItem,
+		Value:    content,
+		Children: p.parseInlineChildren(content),
+		Checked:  checked,
+	}
+}
+
+func taskListState(value string) (string, *bool) {
+	if len(value) < 3 || value[0] != '[' || value[2] != ']' {
+		return value, nil
+	}
+
+	var checked bool
+	switch value[1] {
+	case ' ':
+		checked = false
+	case 'x', 'X':
+		checked = true
+	default:
+		return value, nil
+	}
+
+	content := value[3:]
+	if len(content) > 0 && (content[0] == ' ' || content[0] == '\t') {
+		content = content[1:]
+	}
+	return content, &checked
 }
 
 func nodeTypeFromTokenType(tokenType TokenType) NodeType {

@@ -29,6 +29,9 @@ const (
 	// linha horizontal (---, *** ou ___)
 	HR TokenType = "HR"
 
+	// tabela com cabeçalho e linhas de dados
+	TABLE TokenType = "TABLE"
+
 	// Elementos de texto
 
 	// texto puro sem nenhuma formatação
@@ -52,21 +55,26 @@ const (
 	// imagem no formato ![texto alternativo](url)
 	IMAGE TokenType = "IMAGE"
 
+	// link automático no formato <https://example.com>
+	AUTOLINK TokenType = "AUTOLINK"
+
 	// Fim de arquivo
 	EOF TokenType = "EOF"
 )
 
 type Position struct {
 	Offset int // posição de leitura
-	Line int // número da linha
+	Line   int // número da linha
 	Column int // número da coluna
 }
 type Token struct {
-	Type     TokenType // tipo do token
-	Literal  string    // valor literal do token
-	Position Position  // posição do token no texto de entrada
-	Level    int       // nível de heading
-	Language string    // linguagem do bloco de código
-	URL      string    // endereço de destino para link e image
-	Title    string    // texto descritivo ou alternativo para link e image
+	Type        TokenType // tipo do token
+	Literal     string    // valor literal do token
+	Position    Position  // posição do token no texto de entrada
+	Level       int       // nível de heading
+	Language    string    // linguagem do bloco de código
+	URL         string    // endereço de destino para link e image
+	Title       string    // texto descritivo ou alternativo para link e image
+	TableHeader []string
+	TableRows   [][]string
 }

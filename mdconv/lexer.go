@@ -93,6 +93,12 @@ func (l *Lexer) NextToken() Token {
 		if token, ok := l.lexOrderedList(current.content, current.position); ok {
 			return token
 		}
+		if token, ok := l.lexSetextHeading(current); ok {
+			return token
+		}
+		if token, ok := l.lexTable(current); ok {
+			return token
+		}
 
 		return l.lexParagraph(current)
 	}
@@ -146,13 +152,16 @@ func (l *Lexer) isBlockStart(current line) bool {
 	if _, ok := l.lexHorizontalRule(current.content, current.position); ok {
 		return true
 	}
-	if _, ok := l.lexBlockQuote(current.content, current.position); ok {
+	if _, ok := blockQuoteContent(current.content); ok {
 		return true
 	}
 	if _, ok := l.lexUnorderedList(current.content, current.position); ok {
 		return true
 	}
 	if _, ok := l.lexOrderedList(current.content, current.position); ok {
+		return true
+	}
+	if isTableRow(current.content) {
 		return true
 	}
 	return false
@@ -298,17 +307,153 @@ func (l *Lexer) lexHorizontalRule(line string, pos Position) (Token, bool) {
 }
 
 func (l *Lexer) lexBlockQuote(line string, pos Position) (Token, bool) {
-	trimmed := strings.TrimSpace(line)
-	if !strings.HasPrefix(trimmed, ">") {
+	content, ok := blockQuoteContent(line)
+	if !ok {
 		return Token{}, false
 	}
 
-	content := strings.TrimSpace(trimmed[1:])
+	lines := []string{content}
+	for {
+		next, ok := l.nextLine()
+		if !ok {
+			break
+		}
+
+		content, isQuote := blockQuoteContent(next.content)
+		if !isQuote {
+			if strings.TrimSpace(next.content) != "" {
+				l.pending = &next
+			}
+			break
+		}
+		lines = append(lines, content)
+	}
+
 	return Token{
 		Type:     BLOCKQUOTE,
-		Literal:  content,
+		Literal:  strings.Join(lines, "\n"),
 		Position: pos,
 	}, true
+}
+
+func blockQuoteContent(line string) (string, bool) {
+	trimmed := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmed, ">") {
+		return "", false
+	}
+	return strings.TrimSpace(trimmed[1:]), true
+}
+
+func (l *Lexer) lexSetextHeading(first line) (Token, bool) {
+	next, ok := l.nextLine()
+	if !ok {
+		return Token{}, false
+	}
+	level, isSetext := setextHeadingLevel(next.content)
+	if !isSetext {
+		l.pending = &next
+		return Token{}, false
+	}
+
+	return Token{
+		Type:     HEADING,
+		Literal:  strings.TrimSpace(first.content),
+		Position: first.position,
+		Level:    level,
+	}, true
+}
+
+func setextHeadingLevel(line string) (int, bool) {
+	trimmed := strings.TrimSpace(line)
+	if len(trimmed) == 0 {
+		return 0, false
+	}
+	marker := trimmed[0]
+	if marker != '=' && marker != '-' {
+		return 0, false
+	}
+	for index := 1; index < len(trimmed); index++ {
+		if trimmed[index] != marker {
+			return 0, false
+		}
+	}
+	if marker == '=' {
+		return 1, true
+	}
+	return 2, true
+}
+
+func (l *Lexer) lexTable(first line) (Token, bool) {
+	header := tableCells(first.content)
+	if len(header) == 0 {
+		return Token{}, false
+	}
+
+	separator, ok := l.nextLine()
+	if !ok {
+		return Token{}, false
+	}
+	if !isTableSeparator(separator.content, len(header)) {
+		l.pending = &separator
+		return Token{}, false
+	}
+
+	rows := make([][]string, 0)
+	for {
+		next, ok := l.nextLine()
+		if !ok {
+			break
+		}
+		cells := tableCells(next.content)
+		if len(cells) != len(header) {
+			if strings.TrimSpace(next.content) != "" {
+				l.pending = &next
+			}
+			break
+		}
+		rows = append(rows, cells)
+	}
+
+	return Token{Type: TABLE, Position: first.position, TableHeader: header, TableRows: rows}, true
+}
+
+func isTableRow(line string) bool {
+	return len(tableCells(line)) > 0
+}
+
+func tableCells(line string) []string {
+	trimmed := strings.TrimSpace(line)
+	if !strings.Contains(trimmed, "|") {
+		return nil
+	}
+	trimmed = strings.TrimPrefix(trimmed, "|")
+	trimmed = strings.TrimSuffix(trimmed, "|")
+	parts := strings.Split(trimmed, "|")
+	if len(parts) < 2 {
+		return nil
+	}
+	for index, part := range parts {
+		parts[index] = strings.TrimSpace(part)
+	}
+	return parts
+}
+
+func isTableSeparator(line string, columnCount int) bool {
+	cells := tableCells(line)
+	if len(cells) != columnCount {
+		return false
+	}
+	for _, cell := range cells {
+		if len(cell) < 3 {
+			return false
+		}
+		for index := 0; index < len(cell); index++ {
+			if cell[index] != '-' {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (l *Lexer) lexUnorderedList(line string, pos Position) (Token, bool) {
@@ -358,6 +503,12 @@ func (l *Lexer) lexOrderedList(line string, pos Position) (Token, bool) {
 }
 
 func lexInlineToken(input string, index int, pos Position) (Token, int, bool) {
+	if token, consumed, ok := lexEscapedToken(input, index, pos); ok {
+		return token, consumed, true
+	}
+	if token, consumed, ok := lexAutolinkToken(input, index, pos); ok {
+		return token, consumed, true
+	}
 	if token, consumed, ok := lexLinkOrImageToken(input, index, pos); ok {
 		return token, consumed, true
 	}
@@ -381,6 +532,36 @@ func lexInlineToken(input string, index int, pos Position) (Token, int, bool) {
 	}
 
 	return Token{}, 0, false
+}
+
+func lexEscapedToken(input string, index int, pos Position) (Token, int, bool) {
+	if input[index] != '\\' || index+1 >= len(input) || !isEscapable(input[index+1]) {
+		return Token{}, 0, false
+	}
+
+	return Token{Type: TEXT, Literal: string(input[index+1]), Position: shiftPosition(pos, index)}, 2, true
+}
+
+func lexAutolinkToken(input string, index int, pos Position) (Token, int, bool) {
+	if input[index] != '<' {
+		return Token{}, 0, false
+	}
+
+	end := strings.IndexByte(input[index+1:], '>')
+	if end < 0 {
+		return Token{}, 0, false
+	}
+	url := input[index+1 : index+1+end]
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		return Token{}, 0, false
+	}
+
+	return Token{
+		Type:     AUTOLINK,
+		Literal:  url,
+		URL:      url,
+		Position: shiftPosition(pos, index),
+	}, end + 2, true
 }
 
 func lexLinkOrImageToken(input string, index int, pos Position) (Token, int, bool) {
@@ -487,11 +668,15 @@ func isInlineMarker(input string, index int) bool {
 	}
 
 	switch input[index] {
-	case '!', '[', '*', '_', '~', '`':
+	case '!', '[', '*', '_', '~', '`', '\\', '<':
 		return true
 	default:
 		return false
 	}
+}
+
+func isEscapable(character byte) bool {
+	return strings.ContainsRune("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", rune(character))
 }
 
 func isHorizontalRule(line string) bool {

@@ -25,6 +25,11 @@ const (
 	NodeInlineCode     = mdconv.NodeInlineCode
 	NodeLink           = mdconv.NodeLink
 	NodeImage          = mdconv.NodeImage
+	NodeAutolink       = mdconv.NodeAutolink
+	NodeTable          = mdconv.NodeTable
+	NodeTableHeader    = mdconv.NodeTableHeader
+	NodeTableRow       = mdconv.NodeTableRow
+	NodeTableCell      = mdconv.NodeTableCell
 )
 
 // Parse converte conteúdo Markdown em uma lista de nós da AST.
