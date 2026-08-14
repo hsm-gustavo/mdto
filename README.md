@@ -69,6 +69,28 @@ nodes := mdto.Parse("# Hello, World!")
 `Parse` returns the document's top-level `[]*mdto.Node`. A separate `Document`
 wrapper is intentionally not used yet because the AST has no document-level metadata.
 
+## Command line
+
+Convert a Markdown file to HTML on standard output:
+
+```sh
+mdconv README.md > README.html
+```
+
+When no input file is provided, `mdconv` reads from standard input:
+
+```sh
+cat README.md | mdconv
+```
+
+Use `-o` to write directly to a file. HTML is the only supported output format and
+is selected by default:
+
+```sh
+mdconv README.md -o README.html
+mdconv --to html README.md
+```
+
 ## TODO
 
 - Add support for tables and other advanced markdown features.
