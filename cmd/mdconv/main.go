@@ -1,42 +1,133 @@
 package main
 
 import (
-	"bufio"
-	"log"
+	"fmt"
+	"io"
 	"os"
+	"strings"
 
-	"github.com/hsm-gustavo/mdto/renderer"
+	"github.com/hsm-gustavo/mdto"
 )
 
-func readMarkdownFile(path string) (string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	var content string
-	for scanner.Scan() {
-		content += scanner.Text() + "\n"
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	return content, nil
+type options struct {
+	inputPath  string
+	outputPath string
+	format     string
 }
 
 func main() {
-	markdownContent, err := readMarkdownFile("./examples/EXAMPLE.md")
+	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+}
+
+func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	options, err := parseOptions(args)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(stderr, "mdconv: %v\n", err)
+		printUsage(stderr)
+		return 2
+	}
+	if err := validateFormat(options.format); err != nil {
+		fmt.Fprintf(stderr, "mdconv: %v\n", err)
+		return 2
 	}
 
-	r := renderer.NewHTMLRenderer()
+	input := stdin
+	if options.inputPath != "" {
+		file, err := os.Open(options.inputPath)
+		if err != nil {
+			fmt.Fprintf(stderr, "mdconv: read %s: %v\n", options.inputPath, err)
+			return 1
+		}
+		defer file.Close()
+		input = file
+	}
 
-	html := r.RenderMarkdown(markdownContent)
-	os.WriteFile("./examples/EXAMPLE.html", []byte(html), 0644)
-	log.Println("HTML gerado com sucesso em ./examples/EXAMPLE.html")
+	content, err := io.ReadAll(input)
+	if err != nil {
+		fmt.Fprintf(stderr, "mdconv: read input: %v\n", err)
+		return 1
+	}
+
+	output, err := render(string(content), options.format)
+	if err != nil {
+		fmt.Fprintf(stderr, "mdconv: %v\n", err)
+		return 2
+	}
+
+	if options.outputPath == "" {
+		if _, err := fmt.Fprint(stdout, output); err != nil {
+			fmt.Fprintf(stderr, "mdconv: write stdout: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+
+	file, err := os.Create(options.outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "mdconv: create %s: %v\n", options.outputPath, err)
+		return 1
+	}
+	if _, err := fmt.Fprint(file, output); err != nil {
+		file.Close()
+		fmt.Fprintf(stderr, "mdconv: write %s: %v\n", options.outputPath, err)
+		return 1
+	}
+	if err := file.Close(); err != nil {
+		fmt.Fprintf(stderr, "mdconv: close %s: %v\n", options.outputPath, err)
+		return 1
+	}
+
+	return 0
+}
+
+func parseOptions(args []string) (options, error) {
+	options := options{format: "html"}
+
+	for index := 0; index < len(args); index++ {
+		argument := args[index]
+		switch {
+		case argument == "-o":
+			index++
+			if index == len(args) {
+				return options, fmt.Errorf("-o requires a file path")
+			}
+			options.outputPath = args[index]
+		case strings.HasPrefix(argument, "-o="):
+			options.outputPath = strings.TrimPrefix(argument, "-o=")
+		case argument == "--to":
+			index++
+			if index == len(args) {
+				return options, fmt.Errorf("--to requires a format")
+			}
+			options.format = args[index]
+		case strings.HasPrefix(argument, "--to="):
+			options.format = strings.TrimPrefix(argument, "--to=")
+		case strings.HasPrefix(argument, "-"):
+			return options, fmt.Errorf("unknown option %q", argument)
+		case options.inputPath != "":
+			return options, fmt.Errorf("only one input file is supported")
+		default:
+			options.inputPath = argument
+		}
+	}
+
+	return options, nil
+}
+
+func render(input, format string) (string, error) {
+	if err := validateFormat(format); err != nil {
+		return "", err
+	}
+	return mdto.HTML(input), nil
+}
+
+func validateFormat(format string) error {
+	if format != "html" {
+		return fmt.Errorf("unsupported output format %q", format)
+	}
+	return nil
+}
+
+func printUsage(writer io.Writer) {
+	fmt.Fprintln(writer, "usage: mdconv [--to html] [-o output.html] [input.md]")
 }
